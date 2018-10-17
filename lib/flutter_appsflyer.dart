@@ -39,13 +39,13 @@ class FlutterAppsflyer {
   }
 
   Future<String> getAppsflyerDeviceId() async {
-    String deviceId = await _channel.invokeMethod("getAppsflyerDeviceId");
-    return deviceId;
+    dynamic deviceId = await _channel.invokeMethod("getAppsflyerDeviceId");
+    return deviceId.toString();
   }
 
   Future<String> getSdkVersion() async {
-    String sdkVersion = await _channel.invokeMethod("getSdkVersion");
-    return sdkVersion;
+    dynamic sdkVersion = await _channel.invokeMethod("getSdkVersion");
+    return sdkVersion.toString();
   }
 
   Future<void> _methodCallHandler(MethodCall call) {

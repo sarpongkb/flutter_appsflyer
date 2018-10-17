@@ -49,12 +49,14 @@ static FlutterMethodChannel* afChannel;
 
 
 - (void) onGetAppsflyerDeviceId:(FlutterMethodCall*)call result:(FlutterResult)result {
-  result([[AppsFlyerTracker sharedTracker] getAppsFlyerUID]);
+  NSString* deviceId = [[AppsFlyerTracker sharedTracker] getAppsFlyerUID];
+  result(deviceId);
 }
 
 
 - (void) onGetSdkVersion:(FlutterMethodCall*)call result:(FlutterResult)result {
-  result([[AppsFlyerTracker sharedTracker] getSDKVersion]);
+  NSString* sdkVersion = [[AppsFlyerTracker sharedTracker] getSDKVersion];
+  result(sdkVersion);
 }
 
 
