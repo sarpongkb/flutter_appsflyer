@@ -2,7 +2,7 @@
 
 @implementation FlutterAppsflyerPlugin
 
-NSString DONE = @"DONE";
+NSString* DONE = @"DONE";
 
 static FlutterMethodChannel* afChannel;
 

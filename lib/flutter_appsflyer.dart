@@ -31,19 +31,21 @@ class FlutterAppsflyer {
   Future<void> trackEvent(
     String eventName, {
     Map<String, dynamic> eventValues = const {},
-  }) {
-    return _channel.invokeMethod("trackEvent", {
+  }) async {
+    return await _channel.invokeMethod("trackEvent", {
       "eventName": eventName,
       "eventValues": eventValues,
     });
   }
 
-  Future<String> getAppsflyerDeviceId() {
-    return _channel.invokeMethod("getAppsflyerDeviceId");
+  Future<String> getAppsflyerDeviceId() async {
+    String deviceId = await _channel.invokeMethod("getAppsflyerDeviceId");
+    return deviceId;
   }
 
-  Future<String> getSdkVersion() {
-    return _channel.invokeMethod("getSdkVersion");
+  Future<String> getSdkVersion() async {
+    String sdkVersion = await _channel.invokeMethod("getSdkVersion");
+    return sdkVersion;
   }
 
   Future<void> _methodCallHandler(MethodCall call) {
