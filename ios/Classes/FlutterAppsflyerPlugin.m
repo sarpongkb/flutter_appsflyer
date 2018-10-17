@@ -61,6 +61,7 @@ static FlutterMethodChannel* afChannel;
 
 
 - (void) onConversionDataReceived:(NSDictionary *)installData {
+  NSLog(@"FlutterAppsflyer install conversion loaded %@", installData);
   [afChannel invokeMethod:@"conversionDataReceived" arguments:installData];
 }
 
