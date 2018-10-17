@@ -28,6 +28,16 @@ class FlutterAppsflyer {
     });
   }
 
+  Future<String> getSdkVersion() async {
+    String sdkVersion = await _channel.invokeMethod("getSdkVersion");
+    return sdkVersion;
+  }
+
+  Future<String> getAppsflyerDeviceId() async {
+    String deviceId = await _channel.invokeMethod("getAppsflyerDeviceId");
+    return deviceId;
+  }
+
   Future<void> trackEvent(
     String eventName, {
     Map<String, dynamic> eventValues = const {},
@@ -36,16 +46,6 @@ class FlutterAppsflyer {
       "eventName": eventName,
       "eventValues": eventValues,
     });
-  }
-
-  Future<String> getAppsflyerDeviceId() async {
-    String deviceId = await _channel.invokeMethod("getAppsflyerDeviceId");
-    return deviceId;
-  }
-
-  Future<String> getSdkVersion() async {
-    String sdkVersion = await _channel.invokeMethod("getSdkVersion");
-    return sdkVersion;
   }
 
   Future<void> _methodCallHandler(MethodCall call) {
