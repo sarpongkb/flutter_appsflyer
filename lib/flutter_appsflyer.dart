@@ -97,4 +97,44 @@ class AppsflyerInstance {
       "eventValues": eventValues,
     });
   }
+
+  Future<void> setCustomerUserId(String userId) async {
+    return await _channel.invokeMethod("setCustomerUserId", userId);
+  }
+
+  Future<void> setUserEmails(List<String> emails) async {
+    return await _channel.invokeMethod("setUserEmail", emails);
+  }
+
+  Future<void> setAdditionalData(Map<String, dynamic> data) async {
+    return await _channel.invokeMethod("setAdditionalData", data);
+  }
+
+  Future<bool> isDeviceTrackingEnabled() async {
+    return await _channel.invokeMethod("isDeviceTrackingEnabled");
+  }
+
+  Future<void> enableDeviceTracking() async {
+    return await _channel.invokeMethod("setDeviceTrackingDisabled", false);
+  }
+
+  Future<void> disableDeviceTracking() async {
+    return await _channel.invokeMethod("setDeviceTrackingDisabled", true);
+  }
+
+  Future<String> generateShareLink({
+    @required String channel,
+    String campaign,
+    String playerId,
+    List<String> keywords,
+  }) async {
+    assert(channel != null);
+    assert(campaign != null);
+    return await _channel.invokeMethod("generateShareLink", {
+      "channel": channel,
+      "campaign": campaign,
+      "playerId": playerId,
+      "keywords": keywords.join(","),
+    });
+  }
 }
