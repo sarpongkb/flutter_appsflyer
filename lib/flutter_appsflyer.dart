@@ -1,29 +1,44 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
+typedef AfSuccessListener = void Function(Map<dynamic, dynamic> data);
+typedef AfErrorListener = void Function(String errorMessage);
+
 class FlutterAppsflyer {
   static const MethodChannel _channel =
       const MethodChannel('com.sarpongkb/flutter_appsflyer');
 
-  final AfInstallConversionListener installConversionListener;
+  final AfSuccessListener onConversionDataReceived;
+  final AfSuccessListener onAppOpenAttribution;
+  final AfErrorListener onAppOpenAttributionFailure;
+  final AfErrorListener onConversionDataRequestFailure;
 
-  FlutterAppsflyer({@required this.installConversionListener})
-      : assert(installConversionListener != null) {
+  FlutterAppsflyer({
+    this.onConversionDataReceived,
+    this.onAppOpenAttribution,
+    this.onAppOpenAttributionFailure,
+    this.onConversionDataRequestFailure,
+  }) {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  Future<void> initIOS(
-      {@required String devKey,
-      @required String appleAppId,
-      bool isDebug = false}) {
+  Future<void> initSdk({
+    @required String devKey,
+    String appleAppId,
+    String oneLinkId,
+    bool isDebug = false,
+  }) {
     assert(devKey != null);
-    assert(appleAppId != null);
+    assert(appleAppId != null || !Platform.isIOS,
+        "appleAppId is required for iOS apps");
     return _channel.invokeMethod("initSdk", {
       "devKey": devKey,
       "appleAppId": appleAppId,
+      "oneLinkId": oneLinkId,
       "isDebug": isDebug,
     });
   }
@@ -49,17 +64,30 @@ class FlutterAppsflyer {
   }
 
   Future<void> _methodCallHandler(MethodCall call) {
-    if ("conversionDataReceived" == call.method) {
-      if (installConversionListener != null) {
-        installConversionListener(call.arguments);
-      }
-    } else {
-      FlutterError("Method ${call.method} not implemented");
+    switch (call.method) {
+      case "conversionDataReceived":
+        if (onConversionDataReceived != null) {
+          onConversionDataReceived(call.arguments);
+        }
+        break;
+      case "appOpenAttribution":
+        if (onAppOpenAttribution != null) {
+          onAppOpenAttribution(call.arguments);
+        }
+        break;
+      case "appOpenAttributionFailure":
+        if (onAppOpenAttributionFailure != null) {
+          onAppOpenAttributionFailure(call.arguments);
+        }
+        break;
+      case "conversionDataRequestFailure":
+        if (onConversionDataRequestFailure != null) {
+          onConversionDataRequestFailure(call.arguments);
+        }
+        break;
+      default:
+        FlutterError("Method ${call.method} not implemented");
     }
     return null;
   }
 }
-
-typedef AfInstallConversionListener = void Function(
-  Map<dynamic, dynamic> installData,
-);

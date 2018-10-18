@@ -61,8 +61,23 @@ static FlutterMethodChannel* afChannel;
 
 
 - (void) onConversionDataReceived:(NSDictionary *)installData {
-  NSLog(@"FlutterAppsflyer install conversion loaded %@", installData);
+  NSLog(@"FlutterAppsflyer onConversionDataReceived %@", installData);
   [afChannel invokeMethod:@"conversionDataReceived" arguments:installData];
+}
+
+- (void) onAppOpenAttribution:(NSDictionary *)attributionData {
+  NSLog(@"FlutterAppsflyer onAppOpenAttribution %@", attributionData);
+  [afChannel invokeMethod:@"appOpenAttribution" arguments:attributionData];
+}
+
+- (void)onAppOpenAttributionFailure:(NSError *)error {
+  NSLog(@"FlutterAppsflyer onAppOpenAttributionFailure %li: %@", error.code, error.localizedDescription);
+  [afChannel invokeMethod:@"appOpenAttributionFailure" arguments:error.localizedDescription];
+}
+
+- (void)onConversionDataRequestFailure:(NSError *)error {
+  NSLog(@"FlutterAppsflyer onConversionDataRequestFailure %li: %@", error.code, error.localizedDescription);
+  [afChannel invokeMethod:@"conversionDataRequestFailure" arguments:error.localizedDescription];
 }
 
 @end
