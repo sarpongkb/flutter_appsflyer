@@ -8,41 +8,76 @@ import 'package:meta/meta.dart';
 typedef AfSuccessListener = void Function(Map<dynamic, dynamic> data);
 typedef AfErrorListener = void Function(String errorMessage);
 
-class FlutterAppsflyer {
-  static const MethodChannel _channel =
-      const MethodChannel('com.sarpongkb/flutter_appsflyer');
+AfSuccessListener _onConversionDataReceived;
+AfSuccessListener _onAppOpenAttribution;
+AfErrorListener _onAppOpenAttributionFailure;
+AfErrorListener _onConversionDataRequestFailure;
 
-  final AfSuccessListener onConversionDataReceived;
-  final AfSuccessListener onAppOpenAttribution;
-  final AfErrorListener onAppOpenAttributionFailure;
-  final AfErrorListener onConversionDataRequestFailure;
+const MethodChannel _channel =
+    const MethodChannel('com.sarpongkb/flutter_appsflyer');
 
-  FlutterAppsflyer({
-    this.onConversionDataReceived,
-    this.onAppOpenAttribution,
-    this.onAppOpenAttributionFailure,
-    this.onConversionDataRequestFailure,
-  }) {
-    _channel.setMethodCallHandler(_methodCallHandler);
+Future<dynamic> _methodCallHandler(MethodCall call) {
+  switch (call.method) {
+    case "conversionDataReceived":
+      if (_onConversionDataReceived != null) {
+        _onConversionDataReceived(call.arguments);
+      }
+      break;
+    case "appOpenAttribution":
+      if (_onAppOpenAttribution != null) {
+        _onAppOpenAttribution(call.arguments);
+      }
+      break;
+    case "appOpenAttributionFailure":
+      if (_onAppOpenAttributionFailure != null) {
+        _onAppOpenAttributionFailure(call.arguments);
+      }
+      break;
+    case "conversionDataRequestFailure":
+      if (_onConversionDataRequestFailure != null) {
+        _onConversionDataRequestFailure(call.arguments);
+      }
+      break;
+    default:
+      FlutterError("Method ${call.method} not implemented");
   }
+  return null;
+}
 
-  Future<void> initSdk({
+class FlutterAppsflyer {
+  FlutterAppsflyer._();
+
+  static AppsflyerInstance createInstance({
     @required String devKey,
     String appleAppId,
     String oneLinkId,
     bool isDebug = false,
+    AfSuccessListener onConversionDataReceived,
+    AfSuccessListener onAppOpenAttribution,
+    AfErrorListener onAppOpenAttributionFailure,
+    AfErrorListener onConversionDataRequestFailure,
   }) {
     assert(devKey != null);
     assert(appleAppId != null || !Platform.isIOS,
         "appleAppId is required for iOS apps");
-    return _channel.invokeMethod("initSdk", {
+    _channel.invokeMethod("initSdk", {
       "devKey": devKey,
       "appleAppId": appleAppId,
       "oneLinkId": oneLinkId,
       "isDebug": isDebug,
     });
-  }
 
+    _onConversionDataReceived = onConversionDataReceived;
+    _onAppOpenAttribution = onAppOpenAttribution;
+    _onAppOpenAttributionFailure = onAppOpenAttributionFailure;
+    _onConversionDataRequestFailure = onConversionDataRequestFailure;
+    _channel.setMethodCallHandler(_methodCallHandler);
+
+    return AppsflyerInstance();
+  }
+}
+
+class AppsflyerInstance {
   Future<String> getSdkVersion() async {
     String sdkVersion = await _channel.invokeMethod("getSdkVersion");
     return sdkVersion;
@@ -61,33 +96,5 @@ class FlutterAppsflyer {
       "eventName": eventName,
       "eventValues": eventValues,
     });
-  }
-
-  Future<void> _methodCallHandler(MethodCall call) {
-    switch (call.method) {
-      case "conversionDataReceived":
-        if (onConversionDataReceived != null) {
-          onConversionDataReceived(call.arguments);
-        }
-        break;
-      case "appOpenAttribution":
-        if (onAppOpenAttribution != null) {
-          onAppOpenAttribution(call.arguments);
-        }
-        break;
-      case "appOpenAttributionFailure":
-        if (onAppOpenAttributionFailure != null) {
-          onAppOpenAttributionFailure(call.arguments);
-        }
-        break;
-      case "conversionDataRequestFailure":
-        if (onConversionDataRequestFailure != null) {
-          onConversionDataRequestFailure(call.arguments);
-        }
-        break;
-      default:
-        FlutterError("Method ${call.method} not implemented");
-    }
-    return null;
   }
 }
