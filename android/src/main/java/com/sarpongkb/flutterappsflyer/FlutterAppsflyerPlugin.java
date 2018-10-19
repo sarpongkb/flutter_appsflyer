@@ -1,21 +1,30 @@
 package com.sarpongkb.flutterappsflyer;
 
+import java.util.Map;
+// import android.app.application;
+// import java.io;
+
+import android.util.Log;
+
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
-// import com.appsflyer.AppsFlyerLib;
-// import com.appsflyer.AppsFlyerConversionListener;
+import com.appsflyer.AppsFlyerLib;
+import com.appsflyer.AppsFlyerConversionListener;
 
 /** FlutterAppsflyerPlugin */
 public class FlutterAppsflyerPlugin implements MethodCallHandler {
   private static final String DONE = "DONE";
+  private static MethodChannel channel;
+  private static Registrar registrar;
 
   /** Plugin registration. */
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel = new MethodChannel(registrar.messenger(), "com.sarpongkb/flutter_appsflyer");
+    FlutterAppsflyerPlugin.registrar = registrar;
+    channel = new MethodChannel(registrar.messenger(), "com.sarpongkb/flutter_appsflyer");
     channel.setMethodCallHandler(new FlutterAppsflyerPlugin());
   }
 
@@ -47,11 +56,10 @@ public class FlutterAppsflyerPlugin implements MethodCallHandler {
   }
 
   private void onInitSdk(MethodCall call, Result result) {
-    // String devKey = call.arguments["devKey"];
-    // String appleAppId = call.arguments["appleAppId"];
-    // AppsFlyerLib.getInstance().init(devKey, conversionDataListener,
-    // getApplicationContext());
-    // AppsFlyerLib.getInstance().startTracking(this);
+    String devKey = call.argument("devKey");
+    String appleAppId = call.argument("appleAppId");
+    AppsFlyerLib.getInstance().init(devKey, conversionDataListener, registrar.context());
+    // AppsFlyerLib.getInstance().startTracking(registrar.context());
     result.success(DONE);
   }
 
@@ -64,12 +72,12 @@ public class FlutterAppsflyerPlugin implements MethodCallHandler {
   }
 
   private void onGetAppsflyerDeviceId(MethodCall call, Result result) {
-    String deviceId = "223123"; // [[AppsFlyerTracker sharedTracker] getAppsFlyerUID];
+    String deviceId = "not implemented"; // AppsFlyerLib.getInstance().getAppsFlyerUID(registrar.context());
     result.success(deviceId);
   }
 
   private void onGetSdkVersion(MethodCall call, Result result) {
-    String sdkVersion = "23324"; // [[AppsFlyerTracker sharedTracker] getSDKVersion];
+    String sdkVersion = AppsFlyerLib.getInstance().getSdkVersion();
     result.success(sdkVersion);
   }
 
@@ -125,31 +133,27 @@ public class FlutterAppsflyerPlugin implements MethodCallHandler {
     result.success(DONE);
   }
 
-  // private AppsFlyerConversionListener conversionDataListener = new
-  // AppsFlyerConversionListener() {
-  // // - (void) onConversionDataReceived:(NSDictionary *)installData {
-  // // NSLog(@"FlutterAppsflyer onConversionDataReceived %@", installData);
-  // // [afChannel invokeMethod:@"conversionDataReceived" arguments:installData];
-  // // }
+  private AppsFlyerConversionListener conversionDataListener = new AppsFlyerConversionListener() {
+    public void onInstallConversionDataLoaded(Map<String, String> conversionData) {
+      Log.d("FlutterAppsflyer onInstallConversionDataLoaded", conversionData.toString());
+      // [afChannel invokeMethod:@"conversionDataReceived" arguments:installData];
+    }
 
-  // // - (void) onAppOpenAttribution:(NSDictionary *)attributionData {
-  // // NSLog(@"FlutterAppsflyer onAppOpenAttribution %@", attributionData);
-  // // [afChannel invokeMethod:@"appOpenAttribution" arguments:attributionData];
-  // // }
+    public void onAppOpenAttribution(Map<String, String> attributionData) {
+      Log.d("FlutterAppsflyer onAppOpenAttribution", attributionData.toString());
+      // [afChannel invokeMethod:@"appOpenAttribution" arguments:attributionData];
+    }
 
-  // // - (void)onAppOpenAttributionFailure:(NSError *)error {
-  // // NSLog(@"FlutterAppsflyer onAppOpenAttributionFailure %li: %@", error.code,
-  // // error.localizedDescription);
-  // // [afChannel invokeMethod:@"appOpenAttributionFailure"
-  // // arguments:error.localizedDescription];
-  // // }
+    public void onInstallConversionFailure(String errorMessage) {
+      Log.d("FlutterAppsflyer onInstallConversionFailure", errorMessage);
+      // [afChannel invokeMethod:@"appOpenAttributionFailure"
+      // arguments:error.localizedDescription];
+    }
 
-  // // - (void)onConversionDataRequestFailure:(NSError *)error {
-  // // NSLog(@"FlutterAppsflyer onConversionDataRequestFailure %li: %@",
-  // error.code,
-  // // error.localizedDescription);
-  // // [afChannel invokeMethod:@"conversionDataRequestFailure"
-  // // arguments:error.localizedDescription];
-  // // }
-  // };
+    public void onAttributionFailure(String errorMessage) {
+      Log.d("FlutterAppsflyer onAttributionFailure", errorMessage);
+      // [afChannel invokeMethod:@"conversionDataRequestFailure"
+      // arguments:error.localizedDescription];
+    }
+  };
 }
