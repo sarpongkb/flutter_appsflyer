@@ -1,8 +1,7 @@
 package com.sarpongkb.flutterappsflyer;
 
 import java.util.Map;
-// import android.app.application;
-// import java.io;
+import java.util.HashMap;
 
 import android.util.Log;
 
@@ -14,6 +13,10 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 import com.appsflyer.AppsFlyerLib;
 import com.appsflyer.AppsFlyerConversionListener;
+import com.appsflyer.AppsFlyerProperties;
+import com.appsflyer.CreateOneLinkHttpTask;
+import com.appsflyer.share.LinkGenerator;
+import com.appsflyer.share.ShareInviteHelper;
 
 /** FlutterAppsflyerPlugin */
 public class FlutterAppsflyerPlugin implements MethodCallHandler {
@@ -58,21 +61,23 @@ public class FlutterAppsflyerPlugin implements MethodCallHandler {
   private void onInitSdk(MethodCall call, Result result) {
     String devKey = call.argument("devKey");
     String appleAppId = call.argument("appleAppId");
+    boolean isDebug = call.argument("isDebug");
+    AppsFlyerLib.getInstance().setDebugLog(isDebug);
     AppsFlyerLib.getInstance().init(devKey, conversionDataListener, registrar.context());
-    // AppsFlyerLib.getInstance().startTracking(registrar.context());
+    AppsFlyerLib.getInstance().trackAppLaunch(registrar.context(), devKey);
+    // AppsFlyerLib.getInstance().startTracking(registrar.activity());
     result.success(DONE);
   }
 
   private void onTrackEvent(MethodCall call, Result result) {
-    // String eventName = call.arguments["eventName"];
-    // Map eventValues = call.arguments["eventValues"];
-    // [[AppsFlyerTracker sharedTracker] trackEvent:eventName
-    // withValues:eventValues];
+    String eventName = call.argument("eventName");
+    Map eventValues = call.argument("eventValues");
+    AppsFlyerLib.getInstance().trackEvent(registrar.context(), eventName, eventValues);
     result.success(DONE);
   }
 
   private void onGetAppsflyerDeviceId(MethodCall call, Result result) {
-    String deviceId = "not implemented"; // AppsFlyerLib.getInstance().getAppsFlyerUID(registrar.context());
+    String deviceId = AppsFlyerLib.getInstance().getAppsFlyerUID(registrar.context());
     result.success(deviceId);
   }
 
@@ -82,78 +87,78 @@ public class FlutterAppsflyerPlugin implements MethodCallHandler {
   }
 
   private void isDeviceTrackingEnabled(MethodCall call, Result result) {
-    // BOOL enabled = ![AppsFlyerTracker sharedTracker].deviceTrackingDisabled;
-    result.success(true);
+    boolean disabled = AppsFlyerLib.getInstance().isTrackingStopped();
+    result.success(!disabled);
   }
 
   private void onSetDeviceTrackingDisabled(MethodCall call, Result result) {
-    // BOOL disabled = call.arguments;
-    // NSLog(@"Requesting Appsflyer deviceTrackingDisabled: %i", disabled);
-    // NSLog(@"Before: Appsflyer deviceTrackingDisabled: %i", [AppsFlyerTracker
-    // sharedTracker].deviceTrackingDisabled);
-    // [AppsFlyerTracker sharedTracker].deviceTrackingDisabled = disabled;
-    // NSLog(@"After: Appsflyer deviceTrackingDisabled: %i", [AppsFlyerTracker
-    // sharedTracker].deviceTrackingDisabled);
+    boolean disabled = call.arguments();
+    AppsFlyerLib.getInstance().setDeviceTrackingDisabled(disabled);
     result.success(DONE);
   }
 
-  private void onGenerateShareLink(MethodCall call, Result result) {
-    // String campaign = call.arguments["campaign"];
-    // String channel = call.arguments["channel"];
-    // String playerId = call.arguments["playerId"];
-    // String keywords = call.arguments["keywords"];
+  private void onGenerateShareLink(MethodCall call, final Result result) {
+    String campaign = call.argument("campaign");
+    String channel = call.argument("channel");
+    String playerId = call.argument("playerId");
+    String keywords = call.argument("keywords");
 
-    // [AppsFlyerShareInviteHelper
-    // generateInviteUrlWithLinkGenerator:^AppsFlyerLinkGenerator *
-    // _Nonnull(AppsFlyerLinkGenerator * _Nonnull generator) {
-    // [generator setCampaign:campaign];
-    // [generator setChannel:channel];
-    // [generator setReferrerCustomerId:playerId];
-    // [generator addParameterValue:keywords forKey:@"af_keywords"];
-    // return generator;
-    // } completionHandler:^(NSURL * _Nullable url) {
-    // result([url absoluteString]);
-    // }];
-    result.success(DONE);
+    LinkGenerator generator = ShareInviteHelper.generateInviteUrl(registrar.context());
+    generator.setCampaign(campaign);
+    generator.setChannel(channel);
+    generator.setReferrerCustomerId(playerId);
+    generator.addParameter("af_keywords", keywords);
+
+    generator.generateLink(registrar.context(), new CreateOneLinkHttpTask.ResponseListener() {
+      @Override
+      public void onResponse(String linkUrl) {
+        result.success(linkUrl);
+      }
+
+      @Override
+      public void onResponseError(String errorMessage) {
+        result.error("ONE_LINK_ERROR", errorMessage, null);
+      }
+    });
   }
 
   private void onSetCustomerUserId(MethodCall call, Result result) {
-    // [[AppsFlyerTracker sharedTracker] setCustomerUserID:call.arguments];
+    String id = call.arguments();
+    AppsFlyerLib.getInstance().setCustomerUserId(id);
     result.success(DONE);
   }
 
   private void onSetUserEmails(MethodCall call, Result result) {
-    // [[AppsFlyerTracker sharedTracker] setUserEmails:call.arguments
-    // withCryptType:EmailCryptTypeNone];
+    String userEmails = call.arguments().toString(); // need to convert array/list to a string
+    AppsFlyerLib.getInstance().setUserEmails(AppsFlyerProperties.EmailsCryptType.NONE, userEmails);
     result.success(DONE);
   }
 
   private void onSetAdditionalData(MethodCall call, Result result) {
-    // [[AppsFlyerTracker sharedTracker] setAdditionalData:call.arguments];
+    HashMap<String, Object> data = call.arguments();
+    AppsFlyerLib.getInstance().setAdditionalData(data);
     result.success(DONE);
   }
 
   private AppsFlyerConversionListener conversionDataListener = new AppsFlyerConversionListener() {
     public void onInstallConversionDataLoaded(Map<String, String> conversionData) {
       Log.d("FlutterAppsflyer onInstallConversionDataLoaded", conversionData.toString());
-      // [afChannel invokeMethod:@"conversionDataReceived" arguments:installData];
+      channel.invokeMethod("conversionDataReceived", conversionData);
     }
 
     public void onAppOpenAttribution(Map<String, String> attributionData) {
       Log.d("FlutterAppsflyer onAppOpenAttribution", attributionData.toString());
-      // [afChannel invokeMethod:@"appOpenAttribution" arguments:attributionData];
+      channel.invokeMethod("appOpenAttribution", attributionData);
     }
 
     public void onInstallConversionFailure(String errorMessage) {
       Log.d("FlutterAppsflyer onInstallConversionFailure", errorMessage);
-      // [afChannel invokeMethod:@"appOpenAttributionFailure"
-      // arguments:error.localizedDescription];
+      channel.invokeMethod("conversionDataRequestFailure", errorMessage);
     }
 
     public void onAttributionFailure(String errorMessage) {
       Log.d("FlutterAppsflyer onAttributionFailure", errorMessage);
-      // [afChannel invokeMethod:@"conversionDataRequestFailure"
-      // arguments:error.localizedDescription];
+      channel.invokeMethod("appOpenAttributionFailure", errorMessage);
     }
   };
 }
