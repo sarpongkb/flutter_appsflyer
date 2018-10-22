@@ -18,6 +18,6 @@ A new flutter plugin project.
   s.dependency 'Flutter'
   s.dependency 'AppsFlyerFramework'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '9.0'
 end
 

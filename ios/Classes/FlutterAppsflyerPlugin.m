@@ -11,6 +11,7 @@ static FlutterMethodChannel* afChannel;
                methodChannelWithName:@"com.sarpongkb/flutter_appsflyer"
                binaryMessenger:[registrar messenger]];
   FlutterAppsflyerPlugin* instance = [[FlutterAppsflyerPlugin alloc] init];
+  [registrar addApplicationDelegate:instance];
   [registrar addMethodCallDelegate:instance channel:afChannel];
 }
 
@@ -142,5 +143,25 @@ static FlutterMethodChannel* afChannel;
   NSLog(@"FlutterAppsflyer onConversionDataRequestFailure %li: %@", error.code, error.localizedDescription);
   [afChannel invokeMethod:@"conversionDataRequestFailure" arguments:error.localizedDescription];
 }
+
+
+// Reports app open from deep link for iOS 10
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary *) options {
+  [[AppsFlyerTracker sharedTracker] handleOpenUrl:url options:options];
+  return YES;
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+  [[AppsFlyerTracker sharedTracker] trackAppLaunch];
+}
+
+
+// Reports app open from a Universal Link for iOS 9 or above
+- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nonnull))restorationHandler
+{
+  [[AppsFlyerTracker sharedTracker] continueUserActivity:userActivity restorationHandler:restorationHandler];
+  return YES;
+}
+
 
 @end
